@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 research_output.txt
 traces.jsonl
+research_*.txt

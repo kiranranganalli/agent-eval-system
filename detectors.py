@@ -80,6 +80,13 @@ WHAT THE AGENT DID (its trajectory):
 THE AGENT'S FINAL ANSWER:
 "{final_snippet}"
 
+FAITHFULNESS RULE: Score faithfulness based on whether EVERY specific claim in the final answer
+(names, dates, numbers, events) can be traced to something in the trajectory above — not whether
+the final answer sounds plausible. If any tool result was clearly off-topic or wrong (e.g.,
+returned information about a different subject than asked), faithfulness must be capped at 3/5
+even if the final answer recovered by using other sources, because the agent didn't verify or
+flag the bad source.
+
 Score each dimension from 1 (very poor) to 5 (excellent). For EACH, give the score and a one-sentence justification. Then give an overall verdict and a short analysis of the agent's thinking process (what it did well and what it did poorly).
 
 Respond in EXACTLY this JSON format and nothing else:

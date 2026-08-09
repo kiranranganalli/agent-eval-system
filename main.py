@@ -198,6 +198,28 @@ with EvaluationStore() as store:
         source_name="manual",
     )
 
+    import os
+
+    def rename_saved_file(query, task_id):
+        files = sorted(
+            [f for f in os.listdir(".") if f.startswith("research_") and f.endswith(".txt")],
+            key=os.path.getmtime,
+            reverse=True
+        )
+        if not files:
+            return None
+        latest_file = files[0]
+        words = query.lower().replace("?", "").split()
+        stopwords = {"of", "the", "a", "an", "is", "are", "what", "why", "how", "does", "do"}
+        slug = "_".join(w for w in words if w not in stopwords)[:50]
+        new_name = f"research_{slug}__task{task_id}.txt"
+        os.rename(latest_file, new_name)
+        return new_name
+
+    saved_filename = rename_saved_file(query, task_id)
+    if saved_filename:
+        print(f"📁 Saved research file renamed to: {saved_filename}")
+
     run_id = store.start_run(agent_id=agent_id, task_id=task_id)
 
     for i, (tool, tool_input, tool_output) in enumerate(steps_with_output, start=1):
