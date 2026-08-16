@@ -67,7 +67,9 @@ def judge_agent_run(query, steps_with_output, final_answer):
         snippet = " ".join(str(output).split())[:300]
         trajectory += f"Step {i}: used '{tool}' with input {inp}\n  -> returned: {snippet}\n"
 
-    final_snippet = " ".join(str(final_answer).split())[:800]
+    final_answer_clean = " ".join(str(final_answer).split())
+
+    final_snippet = final_answer_clean
 
     prompt = f"""You are an expert evaluator monitoring an AI agent, like an LLM-as-judge in a production eval system. Evaluate the agent's run below.
 

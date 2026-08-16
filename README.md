@@ -89,6 +89,8 @@ Scoring is only useful if the judge itself can be trusted. To test this, I used 
 
 This is a small sample size so far (1 verified case). Scaling this to more tasks to produce a real agreement percentage is the next step (see Roadmap).
 
+**Current result:** After scaling to 24 calibrated tasks across two domains (airline and retail), the judge agrees with tau2-bench's ground truth on 23/24 (95.8%). This number will keep growing as more tasks are added — every run of `calibrate_judge.py` automatically finds new tau2-bench results and adds them to this total.
+
 ## Stack
 
 - **Agent framework:** LangChain (tool-calling agent) + Claude (Anthropic API)
