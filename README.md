@@ -75,6 +75,18 @@ Building this surfaced real calibration problems in the judge — which is itsel
 
 These aren't bugs to silently patch — they're the reason ground-truth measurement (comparing judge verdicts against known-correct outcomes) is the planned next phase.
 
+## Judge calibration (ground-truth testing)
+
+Scoring is only useful if the judge itself can be trusted. To test this, I used [tau2-bench](https://github.com/sierra-research/tau2-bench) — a benchmark with real conversations and a verified pass/fail outcome (checked against actual database state, not opinion).
+
+**Bug found during calibration:** the judge's final-answer input was silently capped at 800 characters. This was invisible on short research answers, but on a full multi-turn customer service conversation, it meant the judge only ever saw the *beginning* of the conversation — never the actual resolution. The judge confidently scored the run as a FAIL, reasoning that it "could not see whether the agent ultimately refused," while the real transcript clearly showed the agent handling it correctly at the end.
+
+**Fix:** raised the limit and replaced the silent cutoff with a visible warning whenever truncation happens, so context loss is never hidden again.
+
+**Result after the fix:** re-run on the same conversation, the judge scored all 5 dimensions correctly and reached the correct PASS verdict — matching tau2-bench's ground truth.
+
+This is a small sample size so far (1 verified case). Scaling this to more tasks to produce a real agreement percentage is the next step (see Roadmap).
+
 ## Stack
 
 - **Agent framework:** LangChain (tool-calling agent) + Claude (Anthropic API)
@@ -94,7 +106,7 @@ You'll be prompted for a research question. The agent runs, its trace prints ste
 
 ## Roadmap
 
-- [ ] Ground-truth measurement — validate the judge's scores against benchmarks with known correct outcomes (tau2-bench), producing real precision/recall numbers instead of spot-checked judgment
+- [x] Ground-truth measurement (started) — first calibration test against tau2-bench passed after fixing a truncation bug in the judge; scaling to more tasks for a real agreement percentage is in progress
 - [ ] Second agent for cross-agent comparison (different model/config, same tasks)
 - [ ] Multi-agent pipeline with handoff tracking (orchestrator → specialist agents)
 - [ ] Live dashboard reading directly from Postgres
