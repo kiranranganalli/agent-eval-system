@@ -108,9 +108,20 @@ python main.py
 
 You'll be prompted for a research question. The agent runs, its trace prints step by step, the detection layer runs (issues → scorecard → process analysis → path analysis), and the full result is saved to Postgres automatically.
 
+## Live dashboard
+
+A Grafana dashboard reads directly from the same Postgres database — no separate backend or API layer needed, since the schema was already designed to support this. It shows:
+
+- **Judge Calibration Accuracy** — live agreement % between the judge and tau2-bench ground truth
+- **Total Tasks Calibrated** — running count, grows automatically as more tasks are calibrated
+- **Agreement Rate by Domain** — breaks accuracy down by task domain (airline vs. retail), showing the judge performs more consistently on retail's simpler return/exchange logic than on airline's more complex, multi-step policy checks
+- **Average Judge Score by Dimension** — average score per judge dimension (correctness, faithfulness, relevance, tool selection, efficiency), useful for spotting whether the judge is systematically harsher on any one dimension
+
+All panels query `calibration_results` directly with plain SQL — adding a new dimension or metric to track is a query away, not a code change.
+
 ## Roadmap
 
 - [x] Ground-truth measurement (started) — first calibration test against tau2-bench passed after fixing a truncation bug in the judge; scaling to more tasks for a real agreement percentage is in progress
 - [ ] Second agent for cross-agent comparison (different model/config, same tasks)
 - [ ] Multi-agent pipeline with handoff tracking (orchestrator → specialist agents)
-- [ ] Live dashboard reading directly from Postgres
+- [x] Live dashboard reading directly from Postgres (Grafana)
