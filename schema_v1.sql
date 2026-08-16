@@ -178,4 +178,21 @@ CREATE INDEX IF NOT EXISTS idx_tasks_external_id
     ON tasks (external_task_id)
     WHERE external_task_id IS NOT NULL;
 
+-- Calibration results: compares your judge's verdict against tau2-bench ground truth
+CREATE TABLE calibration_results (
+    id SERIAL PRIMARY KEY,
+    source_file TEXT UNIQUE NOT NULL,
+    task_purpose TEXT,
+    ground_truth_reward FLOAT,
+    ground_truth_verdict TEXT,
+    judge_verdict TEXT,
+    agreed BOOLEAN,
+    correctness_score INT,
+    faithfulness_score INT,
+    relevance_score INT,
+    tool_selection_score INT,
+    efficiency_score INT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 COMMIT;
