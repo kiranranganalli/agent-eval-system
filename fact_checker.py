@@ -108,7 +108,10 @@ else:
     print("⚠️  No task_id found in filename — this file predates the linking system.\n")
 
 
+import time
+
 print("🔎 Fact-checker is verifying claims (this takes a moment)...", flush=True)
+start_time = time.time()
 try:
     raw_response = agent_executor.invoke({"research_text": research_text})
 except Exception as e:
@@ -116,6 +119,25 @@ except Exception as e:
     print("This usually means the search tool failed. Try running again.")
     raise SystemExit
 print("✅ Fact-check complete.\n", flush=True)
+end_time = time.time()
+latency_ms = int((end_time - start_time) * 1000)
+
+seen_message_ids = set()
+total_input_tokens = 0
+total_output_tokens = 0
+
+for action, result in raw_response.get("intermediate_steps", []):
+    msg = action.message_log[0] if action.message_log else None
+    if msg is None:
+        continue
+    msg_id = getattr(msg, "id", None)
+    usage = getattr(msg, "usage_metadata", None)
+    if msg_id and usage and msg_id not in seen_message_ids:
+        seen_message_ids.add(msg_id)
+        total_input_tokens += usage.get("input_tokens", 0)
+        total_output_tokens += usage.get("output_tokens", 0)
+
+cost_usd = (total_input_tokens * 3 / 1_000_000) + (total_output_tokens * 15 / 1_000_000)
 
 # Show each tool call cleanly
 print("\n========== TOOL EXECUTION STEPS ==========")
@@ -222,6 +244,10 @@ try:
             verdict="RELIABLE" if false_count == 0 else "UNRELIABLE",
             primary_score=(true_count / len(structured_response.claims_checked)) * 5 if structured_response.claims_checked else None,
             final_output=output_text[:2000],
+            latency_ms=latency_ms,
+            input_tokens=total_input_tokens,
+            output_tokens=total_output_tokens,
+            cost_usd=cost_usd,
             parse_succeeded=True,
             raw_result={"overall_reliability": structured_response.overall_reliability},
         )
