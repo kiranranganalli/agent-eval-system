@@ -62,7 +62,10 @@ agent_executor = AgentExecutor(
 query = input("What can I help you research? ")
 
 # Run the agent (catch tool crashes so one bad tool call doesn't kill everything)
+import time
+
 print("\n Agent is researching (this takes a moment)...", flush=True)
+start_time = time.time()
 try:
     raw_response = agent_executor.invoke({"query": query})
 except Exception as e:
@@ -70,6 +73,30 @@ except Exception as e:
     print("This usually means a tool (like Wikipedia) failed. Try running again.")
     raise SystemExit
 print("Agent finished. Analyzing...", flush=True)
+
+end_time = time.time()
+latency_ms = int((end_time - start_time) * 1000)
+
+# Extract token usage — dedupe by message id since one Claude turn
+# can appear across multiple tool-call steps in intermediate_steps
+seen_message_ids = set()
+total_input_tokens = 0
+total_output_tokens = 0
+
+for action, result in raw_response.get("intermediate_steps", []):
+    msg = action.message_log[0] if action.message_log else None
+    if msg is None:
+        continue
+    msg_id = getattr(msg, "id", None)
+    usage = getattr(msg, "usage_metadata", None)
+    if msg_id and usage and msg_id not in seen_message_ids:
+        seen_message_ids.add(msg_id)
+        total_input_tokens += usage.get("input_tokens", 0)
+        total_output_tokens += usage.get("output_tokens", 0)
+
+# Claude sonnet-4-6 pricing: $3/M input tokens, $15/M output tokens
+cost_usd = (total_input_tokens * 3 / 1_000_000) + (total_output_tokens * 15 / 1_000_000)
+
 
 # Show each tool call cleanly
 print("\n========== TOOL EXECUTION STEPS ==========")
@@ -273,8 +300,12 @@ with EvaluationStore() as store:
         verdict=evaluation.get("overall_verdict", "UNKNOWN"),
         primary_score=avg_score,
         final_output=output_text[:2000],
+        latency_ms=latency_ms,
+        input_tokens=total_input_tokens,
+        output_tokens=total_output_tokens,
+        cost_usd=cost_usd,
         parse_succeeded=parse_succeeded,
         raw_result={"num_issues": len(issues)},
-    )
+)
 
 print(f"✅ Saved to database. Run ID: {run_id}")

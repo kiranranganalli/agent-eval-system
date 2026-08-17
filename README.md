@@ -116,6 +116,9 @@ A Grafana dashboard reads directly from the same Postgres database — no separa
 - **Total Tasks Calibrated** — running count, grows automatically as more tasks are calibrated
 - **Agreement Rate by Domain** — breaks accuracy down by task domain (airline vs. retail), showing the judge performs more consistently on retail's simpler return/exchange logic than on airline's more complex, multi-step policy checks
 - **Average Judge Score by Dimension** — average score per judge dimension (correctness, faithfulness, relevance, tool selection, efficiency), useful for spotting whether the judge is systematically harsher on any one dimension
+- **Judge Accuracy by Sector**, **Judge Verdict Breakdown**, **Research Agent Path Efficiency**, and **Avg Cost & Latency per Run** — additional panels covering sector-level accuracy, pass/fail distribution, tool-call efficiency, and real per-run cost/token/latency tracking
+
+**Real cost & performance tracking.** Initially, the dashboard's "Avg Cost & Latency per Run" panel would have shown misleading data — the `cost_usd`, `input_tokens`, `output_tokens`, and `latency_ms` columns existed in the schema but were never actually being populated by the agent code. Rather than ship a panel with fake-looking zeros, I went back and added real tracking: wall-clock timing around the agent's `invoke()` call, and token-usage extraction from LangChain's `usage_metadata` (de-duplicated by message ID, since a single Claude turn can span multiple tool-call steps). Cost is computed from Claude Sonnet 4.6's published per-token pricing. This is now a genuinely accurate cost/performance panel, not a placeholder.
 
 All panels query `calibration_results` directly with plain SQL — adding a new dimension or metric to track is a query away, not a code change.
 
