@@ -1,5 +1,7 @@
 # Agent Eval System
 
+![Python](https://img.shields.io/badge/python-3.12-blue) ![PostgreSQL](https://img.shields.io/badge/postgres-16-blue) ![LangChain](https://img.shields.io/badge/LangChain-agent-green)
+
 A working observability and evaluation pipeline for AI agents — the same category of problem that Braintrust, Langfuse, and Galileo solve: **capture what an agent did, detect when it silently failed, score it like a human reviewer would, and persist everything for analysis.**
 
 Built end-to-end: a LangChain research agent → a layered detection engine (cheap rules + LLM-as-judge) → a normalized Postgres schema for storing every run, step, score, and issue.
